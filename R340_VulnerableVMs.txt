@@ -1,0 +1,118 @@
+Set up my r340 as a machine to host vulnerable VMs. 
+Will be attacking these VMs as part of my final project for CS-381 Ethical Hacking
+...
+
+Hardware:
+
+  Netgear X6S Nighthawk 
+  -No WAN
+  
+  Dell R340
+  -8DDG243
+  -Intel Xeon E-2224 3.4GHz, 8M c ache, 4C/4T, turbo (71W)
+  -16GB 2666MT/s DDR4 ECC UDIMM
+  -Broadcom 5720 Dual Port 1GbE BASE-T Adapter, PCIe Low Profile
+  -PERC H330 RAID Controller
+  -Dual Hot Plug Power Supplies 350W
+  -Static Rails
+  -2 * 512gb SATA SSD
+
+Software:
+
+  OS: Proxmox
+
+  VM0 (ID: 100): Kali
+
+  VM1 (ID: 9000): Metasploitable 2
+    192.168.1.
+    https://sourceforge.net/projects/metasploitable/
+    https://forum.proxmox.com/threads/metasploitable2.126195/
+
+  VM2 (ID: 9001): DVWA
+    turnkey lamp v18.1
+      https://www.turnkeylinux.org/lamp
+      Passw0rd
+      web: 192.168.1.9
+      webmin: 192.168.1.9:12321
+      adminer: 192.168.1.9:12322
+      ssh/sftp: root@192.168.1.9 (port 22)
+    https://github.com/digininja/DVWA
+      php db user/pass: dvwa/p@ssw0rd
+      mariadb password Passw0rd
+      mariadb create user dvwa@localhost identified by p@ssw0rd
+      192.168.1.9/dvwa/
+        user/pass admin/password
+
+  VM3 (ID:9002): LocalStack
+    ubuntu server 22.04
+    192.168.1.10
+    user/pass localstack/localstack
+    installed docker
+    installed localstack.tar (was a whole process)
+
+  VM4 (ID:9003): IoT Sim
+    Turnkey Fileserver V18.0
+      https://www.turnkeylinux.org/fileserver
+      root/Passw0rd
+      web: 192.168.1.12
+      webmin: 192.168.1.12:12321
+      SMB/CIFS: \\192.168.1.12 (ports 139/445)
+      FTP/FTPS: root@192.168.1.12 (port 21)
+      SSH.SFTP: root@192.168.1.12 (port 22)
+    inetutils-telnetd, inetutils-syslogd, and openbsd-inetd
+
+  VM5 (ID:9004): REMnux
+    https://docs.remnux.org/install-distro/get-virtual-appliance
+    Note: Display should be set to VMware compatible
+          CPU should be set to qemu64
+    user/pass remnux/malware
+    192.168.1.16
+
+  VM6 (ID:9005): Windows 7
+
+  VM7 (ID:9006): Snort
+    Ubuntu Server 24.04
+    192.168.1.17
+    user/pass snort/snort
+
+Fancy art:
+                          (no WAN)
+                             |
+                    ┌──────────────────┐
+                    │ Netgear X6S LAN  │  ← isolated router
+                    └──────────────────┘
+                         |      |
+              ┌──────────┘      └──────────┐
+        ┌────────────┐             ┌────────────┐
+        │ Dell R340  │             │ Kali Laptop│
+        │ Proxmox VE │             └────────────┘
+        └────────────┘
+             |
+     ┌────────────────────┐
+     │ Metasploitable 2 VM│
+     ├────────────────────┤
+     │ DVWA (LAMP) VM     |
+     ├────────────────────┤
+     | LocalStack (ubuntu)|
+     ├────────────────────┤
+     | IoT Sim            |
+     ├────────────────────┤
+     | REMnux             |
+     └────────────────────┘
+
+
+----------
+
+]]]] IDEA SECTION [[[[
+
+Stuff to install:
+Windows 10 eval install
+Ubuntu + Snort install
+
+Lightweight Management Channel (Might be necessary to manage server without exposing laptop to malicious traffic)
+If you want a safe way to manage your R340 from your main laptop without plugging it into your home LAN:
+1. Add a second NIC (if you have one) to Proxmox
+2. Assign it a static IP like 192.168.10.2
+3. Connect a second router (or your laptop directly with static IP)
+4. Keep Proxmox management and lab traffic completely separate
+Or, use a USB flash drive sneakernet method to move tools and reports.
